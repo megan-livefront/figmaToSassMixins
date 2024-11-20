@@ -7,7 +7,8 @@
 if (figma.editorType === "figma") {
   // console.log("SELECTION", figma.currentPage.selection);
   const textFrame = figma.currentPage.selection[0] as FrameNode;
-  const fontItems = [];
+  const desktopFontItems = [];
+  const mobileFontItems = [];
   textFrame.children.forEach((child) => {
     // console.log(child);
     if (child.type === "GROUP" && child.name === "Desktop Styles") {
@@ -18,15 +19,11 @@ if (figma.editorType === "figma") {
             let fontSizeDesktop = "";
             let lineHeightDesktop = "";
             let letterSpacingDesktop = "";
-            // let fontSizeMobile = "";
-            // let lineHeightMobile = "";
-            // let letterSpacingMobile = "";
             if (fontInfoItem.type === "FRAME") {
               fontInfoItem.children.forEach((details) => {
                 if (details.type === "FRAME" && details.children.length === 1) {
                   fontName = (details.children[0] as TextNode).characters;
                 } else if (details.type === "FRAME") {
-                  console.log("DETAILS", details);
                   details.children.forEach((fontData, index) => {
                     if (index === 0)
                       fontSizeDesktop = (fontData as TextNode).characters;
@@ -37,7 +34,7 @@ if (figma.editorType === "figma") {
                   });
                 }
               });
-              fontItems.push({
+              desktopFontItems.push({
                 fontName,
                 fontSizeDesktop,
                 lineHeightDesktop,
@@ -47,7 +44,41 @@ if (figma.editorType === "figma") {
           });
         }
       });
-      console.log("DATA", fontItems);
+      console.log("DESKTOP DATA", desktopFontItems);
+    } else if (child.type === "GROUP" && child.name === "Mobile Text Styles") {
+      child.children.forEach((fontSection) => {
+        if (fontSection.type === "FRAME" && fontSection.name === "StyleInfo") {
+          fontSection.children.forEach((fontInfoItem) => {
+            let fontName = "";
+            let fontSizeMobile = "";
+            let lineHeightMobile = "";
+            let letterSpacingMobile = "";
+            if (fontInfoItem.type === "FRAME") {
+              fontInfoItem.children.forEach((details) => {
+                if (details.type === "FRAME" && details.children.length === 1) {
+                  fontName = (details.children[0] as TextNode).characters;
+                } else if (details.type === "FRAME") {
+                  details.children.forEach((fontData, index) => {
+                    if (index === 0)
+                      fontSizeMobile = (fontData as TextNode).characters;
+                    else if (index === 2)
+                      lineHeightMobile = (fontData as TextNode).characters;
+                    else if (index === 3)
+                      letterSpacingMobile = (fontData as TextNode).characters;
+                  });
+                }
+              });
+              mobileFontItems.push({
+                fontName,
+                fontSizeMobile,
+                lineHeightMobile,
+                letterSpacingMobile,
+              });
+            }
+          });
+        }
+      });
+      console.log("MOBILE DATA", mobileFontItems);
     }
   });
 
