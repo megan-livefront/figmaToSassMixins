@@ -48,7 +48,7 @@ if (figma.editorType === "figma") {
   });
 
   const sassMixins = fontMixins.map((mixin) => {
-    let mixinString = `@mixin text${mixin.fontName} {\n\t font-size: ${mixin.fontSize};\n\t line-height: ${mixin.lineHeight};\n\t letter-spacing: ${mixin.letterSpacing};`;
+    let mixinString = `@mixin text${mixin.fontName} {\n\t font-size: rem(${mixin.fontSize});\n\t line-height: rem(${mixin.lineHeight});\n\t letter-spacing: rem(${mixin.letterSpacing});`;
     if (
       mixin.desktopFontSize ||
       mixin.desktopLineHeight ||
@@ -56,11 +56,11 @@ if (figma.editorType === "figma") {
     ) {
       mixinString += `\n\n\t @include desktopAndUp {`;
       if (mixin.desktopFontSize)
-        mixinString += `\n\t\t font-size: ${mixin.desktopFontSize}`;
+        mixinString += `\n\t\t font-size: rem(${mixin.desktopFontSize})`;
       if (mixin.desktopLineHeight)
-        mixinString += `\n\t\t line-height: ${mixin.desktopLineHeight}`;
+        mixinString += `\n\t\t line-height: rem(${mixin.desktopLineHeight})`;
       if (mixin.desktopLetterSpacing)
-        mixinString += `\n\t\t letter-spacing: ${mixin.desktopLetterSpacing}`;
+        mixinString += `\n\t\t letter-spacing: rem(${mixin.desktopLetterSpacing})`;
       mixinString += `\n\t }`;
     }
     mixinString += `\n }`;
