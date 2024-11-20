@@ -3,23 +3,84 @@
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
 
-// Runs this code if the plugin is run in Figma
-if (figma.editorType === "figma") {
-  const parentFrame = figma.currentPage.selection[0] as FrameNode;
-  const desktopFontItems = getFontData(parentFrame, "Desktop Styles");
-  const mobileFontItems = getFontData(parentFrame, "Mobile Text Styles");
-
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  // figma.closePlugin();
-}
-
 type FontData = {
   fontName: string;
   fontSize: string;
   lineHeight: string;
   letterSpacing: string;
 };
+
+type FontMixin = {
+  fontName: string;
+  fontSize: string;
+  lineHeight: string;
+  letterSpacing: string;
+  desktopFontSize?: string;
+  desktopLineHeight?: string;
+  desktopLetterSpacing?: string;
+};
+
+// Runs this code if the plugin is run in Figma
+if (figma.editorType === "figma") {
+  const parentFrame = figma.currentPage.selection[0] as FrameNode;
+  const desktopFontItems = getFontData(parentFrame, "Desktop Styles");
+  const mobileFontItems = getFontData(parentFrame, "Mobile Text Styles");
+  const fontMixins: FontMixin[] = [];
+
+  mobileFontItems.forEach((mobileFontItem) => {
+    const mixin: FontMixin = mobileFontItem;
+    const desktopEquivalent = desktopFontItems.find(
+      (desktopFontItem) => desktopFontItem.fontName === mobileFontItem.fontName
+    );
+
+    if (desktopEquivalent) {
+      if (desktopEquivalent.fontSize !== mobileFontItem.fontSize) {
+        mixin.desktopFontSize = desktopEquivalent.fontSize;
+      }
+      if (desktopEquivalent.lineHeight !== mobileFontItem.lineHeight) {
+        mixin.desktopLineHeight = desktopEquivalent.lineHeight;
+      }
+      if (desktopEquivalent.letterSpacing !== mobileFontItem.letterSpacing) {
+        mixin.desktopLetterSpacing = desktopEquivalent.letterSpacing;
+      }
+    }
+    fontMixins.push(mixin);
+  });
+
+  // console.log(fontMixins);
+  const sassMixins = fontMixins.map((mixin) => {
+    let mixinString = `@mixin text${mixin.fontName} { \n  font-size: ${mixin.fontSize}; \n  line-height: ${mixin.lineHeight}; \n  letter-spacing: ${mixin.letterSpacing};`;
+    if (
+      mixin.desktopFontSize ||
+      mixin.desktopLineHeight ||
+      mixin.desktopLetterSpacing
+    ) {
+      mixinString += `\n @include desktopAndUp {`;
+      if (mixin.desktopFontSize)
+        mixinString += `\n \t font-size: ${mixin.desktopFontSize}`;
+      if (mixin.desktopLineHeight)
+        mixinString += `\n \t line-height: ${mixin.desktopLineHeight}`;
+      if (mixin.desktopLetterSpacing)
+        mixinString += `\n \t letter-spacing: ${mixin.desktopLetterSpacing}`;
+      mixinString += `\n }`;
+    }
+    mixinString += `\n }`;
+
+    // console.log(mixinString);
+    return mixinString;
+  });
+
+  let allMixins = "";
+  sassMixins.forEach((sassMixin) => {
+    allMixins += `\n\n ${sassMixin}`;
+  });
+
+  console.log(allMixins);
+
+  // Make sure to close the plugin when you're done. Otherwise the plugin will
+  // keep running, which shows the cancel button at the bottom of the screen.
+  // figma.closePlugin();
+}
 
 function getFontData(parentFrame: FrameNode, nodeName: string) {
   const fontData: FontData[] = [];
@@ -35,7 +96,9 @@ function getFontData(parentFrame: FrameNode, nodeName: string) {
             if (fontInfoItem.type === "FRAME") {
               fontInfoItem.children.forEach((details) => {
                 if (details.type === "FRAME" && details.children.length === 1) {
-                  fontName = (details.children[0] as TextNode).characters;
+                  fontName = (
+                    details.children[0] as TextNode
+                  ).characters.replace(/\s+/g, "");
                 } else if (details.type === "FRAME") {
                   details.children.forEach((fontData, index) => {
                     if (index === 0)
@@ -60,6 +123,5 @@ function getFontData(parentFrame: FrameNode, nodeName: string) {
     }
   });
 
-  console.log(nodeName, fontData);
   return fontData;
 }
